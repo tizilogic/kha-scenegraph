@@ -1,0 +1,14 @@
+{
+	"name": "scenegraph",
+	"url" : "https://github.com/tizilogic/haxe-scenegraph",
+	"license": "MIT",
+	"tags": ["cross", "game"],
+	"description": "2D scenegraph for kha",
+	"version": "0.0.1",
+	"releasenote": "Initial release.",
+	"contributors": ["tcdude"],
+	"dependencies": {
+		"kha": ""
+	},
+	"classPath": "Sources"
+}
