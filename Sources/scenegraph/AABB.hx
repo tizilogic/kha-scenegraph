@@ -1,18 +1,17 @@
 package scenegraph;
 
-import kha.FastFloat;
+import kha.math.FastVector2;
 import kha.math.Vector2;
 
 
 class AABB {
-    public var x:FastFloat;
-    public var y:FastFloat;
+    public var pos(get_pos, set_pos):FastVector2;
     public var hw:FastFloat;
     public var hh:FastFloat;
 
-    public function new(x:FastFloat, y:FastFloat, hw:FastFloat, hh:FastFloat) {
-        this.x = x;
-        this.y = y;
+    public function new(?vpos:FastVector2, ?x:FastFloat, ?y:FastFloat,
+                        hw:FastFloat, hh:FastFloat) {
+        set_pos(vpos, x, y);
         this.hw = hw;
         this.hh = hh;
     }
@@ -37,5 +36,22 @@ class AABB {
         var tt = y - hh;
         var tb = y + hh;
         return (other.x > tl && other.x < tr && other.y > tt && other.y < tb);
+    }
+
+    public function get_pos():FastVector2 {
+        return pos;
+    }
+
+    public function set_pos(?vpos:FastVector2, ?x:FastFloat, ?y:FastFloat) {
+        if (vpos != null) {
+            pos = vpos;
+        }
+        else if (x != null && y != null) {
+            pos.x = x;
+            pos.y = y;
+        }
+        else {
+            throw "Either pass a vector or both components of it";
+        }
     }
 }
