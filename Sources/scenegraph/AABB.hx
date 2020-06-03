@@ -48,4 +48,8 @@ class AABB {
     public function set_pos(pos:FastVector2) {
         return this.pos = pos;
     }
+
+    public function toString() {
+        return "AABB(" + pos + ", " + hw + ", " + hh + ")";
+    }
 }
