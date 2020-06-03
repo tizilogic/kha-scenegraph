@@ -3,6 +3,7 @@ package scenegraph;
 
 import kha.math.FastMatrix3;
 import kha.math.FastVector2;
+import haxe.io.Bytes;
 
 class Scene {
     private var _aabb:Array<AABB>;
