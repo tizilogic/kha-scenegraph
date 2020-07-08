@@ -5,8 +5,8 @@ import kha.FastFloat;
 import kha.Image;
 import kha.graphics2.Graphics;
 import kha.math.FastMatrix3;
-import core.Types.DrawRect;
-import scene.Scene;
+import scenegraph.Types;
+import scenegraph.Scene;
 
 
 class Node {

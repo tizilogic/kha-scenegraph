@@ -6,10 +6,10 @@ import kha.Font;
 import kha.Image;
 import kha.math.FastMatrix3;
 import kha.graphics2.Graphics;
-import core.Types;
-import scene.Node;
-import scene.Sprite;
-import scene.Text;
+import scenegraph.Types;
+import scenegraph.Node;
+import scenegraph.Sprite;
+import scenegraph.Text;
 
 
 @:enum
@@ -24,7 +24,7 @@ abstract NodeFlag (Int) to Int {
 }
 
 
-@:allow(scene.Node)
+@:allow(scenegraph.Node)
 class Scene {
     public var root(get, null):Node;
     private static var _default:Scene;

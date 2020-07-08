@@ -5,8 +5,8 @@ import kha.Font;
 import kha.graphics2.Graphics;
 import kha.FastFloat;
 import kha.Image;
-import scene.Scene;
-import scene.Node;
+import scenegraph.Scene;
+import scenegraph.Node;
 
 
 class Text extends Node {
