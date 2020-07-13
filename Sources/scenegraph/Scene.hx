@@ -4,12 +4,10 @@ import kha.Color;
 import kha.FastFloat;
 import kha.Font;
 import kha.Image;
+import kha.System;
 import kha.math.FastMatrix3;
-import kha.graphics2.Graphics;
 import scenegraph.Types;
 import scenegraph.Node;
-import scenegraph.Sprite;
-import scenegraph.Text;
 
 
 @:enum
@@ -36,6 +34,16 @@ class Scene {
         return _default;
     }
 
+    // System
+    private var dirtyPath:Array<Int>;
+    private var _renderOrder = new Array<Int>();
+    private var _visible:Array<Int>;
+    private var _toProcess = new Array<Int>();
+    public var pxPerUnit(default, null):FastFloat;
+    public var bgColor = Color.Black;
+    private var _buffer:Image;
+
+    // Node
     private static var nodes = new Map<Scene, Map<Int, Node>>();
     private var x = new Array<FastFloat>();
     private var y = new Array<FastFloat>();
@@ -49,10 +57,8 @@ class Scene {
     private var absDepth = new Array<Int>();
     private var alpha = new Array<FastFloat>();
     private var angle = new Array<FastFloat>();
-    private var absAngle = new Array<FastFloat>();
     private var flags = new Array<Int>();
     private var transform = new Array<FastMatrix3>();
-    private var absTransform = new Array<FastMatrix3>();
     private var parent = new Array<Int>();
     private var imageId = new Array<Int>();
     private var textId = new Array<Int>();
@@ -63,8 +69,6 @@ class Scene {
     private var sy = new Array<FastFloat>();
     private var sw = new Array<FastFloat>();
     private var sh = new Array<FastFloat>();
-    private var dw = new Array<FastFloat>();
-    private var dh = new Array<FastFloat>();
 
     // Text
     private var text = new Array<String>();
@@ -73,9 +77,13 @@ class Scene {
     private var color = new Array<Color>();
 
     private var _free = new Array<Int>();
-    private var _renderOrder = new Array<Node>();
+    private var _freeImage = new Array<Int>();
+    private var _freeText = new Array<Int>();
 
-    public function new(?reserve:Int = 0) {
+
+    public function new(?buffer:Image = null, ?reserve:Int = 0) {
+        dirtyPath = [];
+
         x.resize(reserve + 1);
         y.resize(reserve + 1);
         width.resize(reserve + 1);
@@ -88,11 +96,13 @@ class Scene {
         absDepth.resize(reserve + 1);
         alpha.resize(reserve + 1);
         angle.resize(reserve + 1);
-        absAngle.resize(reserve + 1);
         flags.resize(reserve + 1);
         transform.resize(reserve + 1);
-        absTransform.resize(reserve + 1);
         parent.resize(reserve + 1);
+        imageId.resize(reserve + 1);
+        textId.resize(reserve + 1);
+
+        // Root
         x[0] = 0;
         y[0] = 0;
         width[0] = 0;
@@ -105,11 +115,12 @@ class Scene {
         absDepth[0] = 0;
         alpha[0] = 1;
         angle[0] = 0;
-        absAngle[0] = 0;
         flags[0] = DIRTY;
         transform[0] = FastMatrix3.identity();
-        absTransform[0] = null;
         parent[0] = 0;
+        imageId[0] = -1;
+        textId[0] = -1;
+
         if (reserve > 0) {
             _free.resize(reserve);
             for (i in 1...reserve + 1) {
@@ -121,27 +132,206 @@ class Scene {
             }
         }
         nodes[this] = [0 => new Node(this, true)];
+        if (buffer == null) {
+            _buffer = Image.createRenderTarget(System.windowWidth(), System.windowHeight());
+        }
+        else {
+            _buffer = buffer;
+        }
+        this.pxPerUnit = Math.min(_buffer.width, _buffer.height);
     }
 
-    private function insertImage(nodeId:Int, image:Image, rect:DrawRect) {
-        imageId[nodeId] = this.image.length;
-        this.image.push(image);
+    private function insertImage(nodeId:Int, image:Image, ?rect:SourceRect = null) {
+        var id:Int;
+        var sRect:SourceRect = rect == null ? {sx:0, sy:0, sw:image.width, sh:image.height} : rect;
+        if (_freeImage.length > 0) {
+            id = _freeImage.pop();
+            this.image[id] = image;
+            sx[id] = sRect.sx;
+            sy[id] = sRect.sy;
+            sw[id] = sRect.sw;
+            sh[id] = sRect.sh;
+        }
+        else {
+            id = this.image.length;
+            this.image.push(image);
+            sx.push(sRect.sx);
+            sy.push(sRect.sy);
+            sw.push(sRect.sw);
+            sh.push(sRect.sh);
+        }
+        imageId[nodeId] = id;
+        _renderOrder.push(nodeId);
+        width[nodeId] = sw[id] / pxPerUnit;
+        height[nodeId] = sh[id] / pxPerUnit;
+    }
+
+    private function insertText(nodeId:Int, text:String, font:Font, fontSize:FastFloat, color:Color) {
+        var id:Int;
+        var fs = Std.int(fontSize * pxPerUnit + 0.5);
+        if (_freeText.length > 0) {
+            id = _freeText.pop();
+            this.text[id] = text;
+            this.font[id] = font;
+            this.fontSize[id] = fs;
+            this.color[id] = color;
+        }
+        else {
+            id = this.text.length;
+            this.text.push(text);
+            this.font.push(font);
+            this.fontSize.push(fs);
+            this.color.push(color);
+        }
+        textId[nodeId] = id;
+        _renderOrder.push(nodeId);
+        width[nodeId] =  font.width(fs, text) / pxPerUnit;
+        height[nodeId] = font.height(fs) / pxPerUnit;
     }
 
     private function get_root():Node {
         return nodes[this][0];
     }
 
-    public function traverse(startNode:Int):Bool {
+    public function traverse():Bool {
+        if (!populateDirtyPath()) {
+            return false;
+        }
+        for (i in dirtyPath) {
+            if (i == -1) {
+                break;
+            }
+            flags[i] = flags[i] ^ DIRTY;
+            if (i == 0) {
+                continue;  // root remains identity matrix
+            }
+            var dx = x[i] * pxPerUnit;
+            var dy = y[i] * pxPerUnit;
+            transform[i] = transform[parent[i]].multmat(FastMatrix3.translation(dx, dy));
+            if (angle[i] != 0) {
+                var hw = flags[i] & HAS_ROT_CENTER > 0 ? rotX[i] * pxPerUnit : (width[i] * pxPerUnit) / 2;
+                var hh = flags[i] & HAS_ROT_CENTER > 0 ? rotY[i] * pxPerUnit : (height[i] * pxPerUnit) / 2;
+                transform[i] = transform[i].multmat(FastMatrix3.translation(hw, hh))
+                    .multmat(FastMatrix3.rotation(angle[i]))
+                    .multmat(FastMatrix3.translation(-hw, -hh));
+            }
+            trace("translation: " + x[i] * pxPerUnit + ", " + y[i] * pxPerUnit);
+            transform[i] = transform[i].multmat(FastMatrix3.scale(scaleX[i], scaleY[i]));
+            absDepth[i] = absDepth[parent[i]] + depth[parent[i]] + depth[i];
+        }
         return true;
     }
 
-    public function render(g:Graphics) {
+    private function populateDirtyPath():Bool {
+        if (flags[0] & DIRTY == 0 || flags[0] & HIDDEN > 0) {
+            return false;
+        }
+        dirtyPath.resize(flags.length);
+        var cursor = 0;
+        _toProcess.push(0);
+        while (_toProcess.length > 0) {
+            var pid = _toProcess.pop();
+            dirtyPath[cursor] = pid;
+            ++cursor;
+            for (i in 1...flags.length) {
+                if (flags[i] & FREE == 0 && flags[i] & HIDDEN == 0 && parent[i] == pid && flags[i] & DIRTY > 0) {
+                    _toProcess.push(i);
+                }
+            }
+        }
+        if (cursor < flags.length) {
+            dirtyPath[cursor] = -1;
+        }
+        return true;
+    }
 
+    private inline function comp(x:Int, y:Int):Int {
+        return absDepth[x] == absDepth[y] ? 0 : absDepth[x] > absDepth[y] ? 1 : -1;
+    }
+
+    private function updateRenderOrder() {
+        var cursor = 0;
+        _toProcess.push(0);
+        while (_toProcess.length > 0) {
+            var pid = _toProcess.pop();
+            if (flags[pid] & HIDDEN > 0) {
+                continue;
+            }
+            else if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) > 0) {
+                _renderOrder[cursor] = pid;
+                ++cursor;
+            }
+            for (i in 1...flags.length) {
+                if (parent[i] == pid) {
+                    _toProcess.push(i);
+                }
+            }
+        }
+        _visible = _renderOrder.slice(0, cursor);
+        _visible.sort(comp);
+    }
+
+    public function render():Image {
+        var g = _buffer.g2;
+
+        if (traverse()) {
+            updateRenderOrder();
+            trace("pxPerUnit: " + pxPerUnit);
+            g.begin();
+            g.color = bgColor;
+            g.fillRect(0, 0, _buffer.width, _buffer.height);
+            g.color = Color.White;
+            for (i in _visible) {
+                g.pushOpacity(alpha[i]);
+                g.pushTransformation(transform[i]);
+                if (flags[i] & IS_IMAGE > 0) {
+                    var id = imageId[i];
+                    g.drawSubImage(image[id], 0, 0, sx[id], sy[id], sw[id], sh[id]);
+                }
+                else if (flags[i] & IS_TEXT > 0) {
+                    var id = textId[i];
+                    var prevColor = g.color;
+                    g.color = color[id];
+                    g.font = font[id];
+                    g.fontSize = fontSize[id];
+                    g.drawString(text[id], 0, 0);
+                    g.color = prevColor;
+                }
+                g.popTransformation();
+                g.popOpacity();
+            }
+            g.end();
+        }
+        return _buffer;
     }
 
     public function propagateDirty(nodeId:Int) {
+        _toProcess.push(nodeId);
+        // Flag all children
+        while (_toProcess.length > 0) {
+            var pid = _toProcess.pop();
+            flags[pid] = flags[pid] | DIRTY;
+            for (i in 1...flags.length) {
+                if (i == pid || flags[i] & FREE > 0) {
+                    continue;
+                }
+                if (parent[i] == pid) {
+                    _toProcess.push(i);
+                }
+            }
+        }
 
+        // Flag direct path to root
+        if (parent[nodeId] != nodeId) {
+            _toProcess.push(parent[nodeId]);
+        }
+        while (_toProcess.length > 0) {
+            var pid = _toProcess.pop();
+            flags[pid] = flags[pid] | DIRTY;
+            if (parent[pid] != pid) {
+                _toProcess.push(parent[pid]);
+            }
+        }
     }
 
     public function newNode():Int {
@@ -157,11 +347,14 @@ class Scene {
             scaleX[id] = 0;
             scaleY[id] = 0;
             depth[id] = 0;
+            absDepth[id] = 0;
             alpha[id] = 1;
             angle[id] = 0;
             transform[id] = null;
             flags[id] = DIRTY;
             parent[id] = id;
+            imageId[id] = -1;
+            textId[id] = -1;
         }
         else {
             id = x.length;
@@ -177,19 +370,25 @@ class Scene {
             absDepth.push(0);
             alpha.push(1);
             angle.push(0);
-            absAngle.push(0);
             flags.push(DIRTY);
             transform.push(null);
-            absTransform.push(null);
             parent.push(id);
+            imageId.push(-1);
+            textId.push(-1);
         }
         return id;
     }
 
     public function removeNode(nodeId:Int) {
+        if (flags[nodeId] & IS_IMAGE > 0) {
+            _freeImage.push(imageId[nodeId]);
+        }
+        else if (flags[nodeId] & IS_TEXT > 0) {
+            _freeText.push(textId[nodeId]);
+        }
         flags[nodeId] = FREE;
         _free.push(nodeId);
-        _renderOrder.remove(nodes[this][nodeId]);
         nodes[this].remove(nodeId);
+        while (_renderOrder.remove(nodeId)) {}
     }
 }
