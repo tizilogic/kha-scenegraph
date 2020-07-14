@@ -35,7 +35,6 @@ class Scene {
     }
 
     // System
-    private var dirtyPath:Array<Int>;
     private var _renderOrder = new Array<Int>();
     private var _visible:Array<Int>;
     private var _toProcess = new Array<Int>();
@@ -82,8 +81,6 @@ class Scene {
 
 
     public function new(?buffer:Image = null, ?reserve:Int = 0) {
-        dirtyPath = [];
-
         x.resize(reserve + 1);
         y.resize(reserve + 1);
         width.resize(reserve + 1);
@@ -193,53 +190,47 @@ class Scene {
         return nodes[this][0];
     }
 
-    public function traverse():Bool {
-        if (!populateDirtyPath()) {
-            return false;
+    private inline function updateTransform(pid:Int, parentTransform:FastMatrix3) {
+        var dx = x[pid] * pxPerUnit;
+        var dy = y[pid] * pxPerUnit;
+        transform[pid] = parentTransform.multmat(FastMatrix3.scale(scaleX[pid], scaleY[pid]))
+            .multmat(FastMatrix3.translation(dx, dy));
+        if (angle[pid] != 0) {
+            var hw = flags[pid] & HAS_ROT_CENTER > 0 ? rotX[pid] * pxPerUnit : (width[pid] * pxPerUnit) / 2;
+            var hh = flags[pid] & HAS_ROT_CENTER > 0 ? rotY[pid] * pxPerUnit : (height[pid] * pxPerUnit) / 2;
+            transform[pid] = transform[pid].multmat(FastMatrix3.translation(hw, hh))
+                .multmat(FastMatrix3.rotation(angle[pid]))
+                .multmat(FastMatrix3.translation(-hw, -hh));
         }
-        for (i in dirtyPath) {
-            if (i == -1) {
-                break;
-            }
-            flags[i] = flags[i] ^ DIRTY;
-            if (i == 0) {
-                continue;  // root remains identity matrix
-            }
-            var dx = x[i] * pxPerUnit;
-            var dy = y[i] * pxPerUnit;
-            transform[i] = transform[parent[i]].multmat(FastMatrix3.scale(scaleX[i], scaleY[i])).multmat(FastMatrix3.translation(dx, dy));
-            if (angle[i] != 0) {
-                var hw = flags[i] & HAS_ROT_CENTER > 0 ? rotX[i] * pxPerUnit : (width[i] * pxPerUnit) / 2;
-                var hh = flags[i] & HAS_ROT_CENTER > 0 ? rotY[i] * pxPerUnit : (height[i] * pxPerUnit) / 2;
-                transform[i] = transform[i].multmat(FastMatrix3.translation(hw, hh))
-                    .multmat(FastMatrix3.rotation(angle[i]))
-                    .multmat(FastMatrix3.translation(-hw, -hh));
-            }
-            absDepth[i] = absDepth[parent[i]] + depth[parent[i]] + depth[i];
-        }
-        return true;
+        absDepth[pid] = absDepth[parent[pid]] + depth[parent[pid]] + depth[pid];
     }
 
-    private function populateDirtyPath():Bool {
+    public function traverse():Bool {
         if (flags[0] & DIRTY == 0 || flags[0] & HIDDEN > 0) {
             return false;
         }
-        dirtyPath.resize(flags.length);
         var cursor = 0;
         _toProcess.push(0);
         while (_toProcess.length > 0) {
             var pid = _toProcess.pop();
-            dirtyPath[cursor] = pid;
-            ++cursor;
+            var pTrans = transform[pid];
             for (i in 1...flags.length) {
-                if (flags[i] & FREE == 0 && flags[i] & HIDDEN == 0 && parent[i] == pid && flags[i] & DIRTY > 0) {
-                    _toProcess.push(i);
+                if (flags[i] & FREE > 0 || flags[i] & HIDDEN > 0 || parent[i] != pid ) {
+                    continue;
                 }
+                if (flags[i] & DIRTY > 0) {
+                    updateTransform(i, pTrans);
+                }
+                _toProcess.push(i);
             }
+            if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) > 0) {
+                _renderOrder[cursor] = pid;
+                ++cursor;
+            }
+            flags[pid] = flags[pid] & DIRTY > 0 ? flags[pid] ^ DIRTY : flags[pid];
         }
-        if (cursor < flags.length) {
-            dirtyPath[cursor] = -1;
-        }
+        _visible = _renderOrder.slice(0, cursor);
+        _visible.sort(comp);
         return true;
     }
 
@@ -247,33 +238,10 @@ class Scene {
         return absDepth[x] == absDepth[y] ? 0 : absDepth[x] > absDepth[y] ? 1 : -1;
     }
 
-    private function updateRenderOrder() {
-        var cursor = 0;
-        _toProcess.push(0);
-        while (_toProcess.length > 0) {
-            var pid = _toProcess.pop();
-            if (flags[pid] & HIDDEN > 0) {
-                continue;
-            }
-            else if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) > 0) {
-                _renderOrder[cursor] = pid;
-                ++cursor;
-            }
-            for (i in 1...flags.length) {
-                if (parent[i] == pid) {
-                    _toProcess.push(i);
-                }
-            }
-        }
-        _visible = _renderOrder.slice(0, cursor);
-        _visible.sort(comp);
-    }
-
     public function render():Image {
         var g = _buffer.g2;
 
         if (traverse()) {
-            updateRenderOrder();
             g.begin();
             g.color = bgColor;
             g.fillRect(0, 0, _buffer.width, _buffer.height);
