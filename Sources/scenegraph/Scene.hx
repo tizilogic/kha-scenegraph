@@ -207,7 +207,7 @@ class Scene {
             }
             var dx = x[i] * pxPerUnit;
             var dy = y[i] * pxPerUnit;
-            transform[i] = transform[parent[i]].multmat(FastMatrix3.translation(dx, dy));
+            transform[i] = transform[parent[i]].multmat(FastMatrix3.scale(scaleX[i], scaleY[i])).multmat(FastMatrix3.translation(dx, dy));
             if (angle[i] != 0) {
                 var hw = flags[i] & HAS_ROT_CENTER > 0 ? rotX[i] * pxPerUnit : (width[i] * pxPerUnit) / 2;
                 var hh = flags[i] & HAS_ROT_CENTER > 0 ? rotY[i] * pxPerUnit : (height[i] * pxPerUnit) / 2;
@@ -215,8 +215,6 @@ class Scene {
                     .multmat(FastMatrix3.rotation(angle[i]))
                     .multmat(FastMatrix3.translation(-hw, -hh));
             }
-            trace("translation: " + x[i] * pxPerUnit + ", " + y[i] * pxPerUnit);
-            transform[i] = transform[i].multmat(FastMatrix3.scale(scaleX[i], scaleY[i]));
             absDepth[i] = absDepth[parent[i]] + depth[parent[i]] + depth[i];
         }
         return true;
@@ -276,7 +274,6 @@ class Scene {
 
         if (traverse()) {
             updateRenderOrder();
-            trace("pxPerUnit: " + pxPerUnit);
             g.begin();
             g.color = bgColor;
             g.fillRect(0, 0, _buffer.width, _buffer.height);
