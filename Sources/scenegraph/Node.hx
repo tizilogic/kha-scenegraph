@@ -3,6 +3,7 @@ package scenegraph;
 
 import kha.Color;
 import kha.FastFloat;
+import kha.math.FastVector2;
 import kha.Font;
 import kha.Image;
 import scenegraph.Scene;
@@ -88,6 +89,39 @@ class Node {
     }
 
     // Getter/Setter
+    public inline function setRelativePos(node:Node, x:FastFloat, y:FastFloat) {
+        _scene.traverse(false);
+        var idVec = new FastVector2(1, 1);
+        var pos = new FastVector2(x, y);
+        var delta = _scene.transform[node.id].multvec(idVec).mult(1 / _scene.pxPerUnit).add(pos);
+        delta = _scene.transform[id].multvec(idVec).mult(1 / _scene.pxPerUnit).sub(delta);
+        this.x -= delta.x;
+        this.y -= delta.y;
+    }
+
+    public inline function setRelativeAngle(node:Node, rad:FastFloat) {
+        _scene.traverse(false);
+        var delta = Math.atan2(-_scene.transform[node.id]._01, _scene.transform[node.id]._00);
+        angle -= delta + rad + angle;
+    }
+
+    public inline function setRelativeScale(node:Node, sx:FastFloat, ?sy:FastFloat = -1) {
+        _scene.traverse(false);
+        var thisScale = Math.sqrt(Math.pow(_scene.transform[id]._00, 2) + Math.pow(_scene.transform[id]._10, 2));
+        thisScale /= scaleX;
+        var otherScale = Math.sqrt(Math.pow(_scene.transform[node.id]._00, 2) + Math.pow(_scene.transform[node.id]._10, 2));
+        scaleX = thisScale * (otherScale * sx);
+        thisScale = Math.sqrt(Math.pow(_scene.transform[id]._01, 2) + Math.pow(_scene.transform[id]._11, 2));
+        thisScale /= scaleY;
+        otherScale = Math.sqrt(Math.pow(_scene.transform[node.id]._01, 2) + Math.pow(_scene.transform[node.id]._11, 2));
+        scaleY = thisScale * (otherScale * (sy > 0 ? sy : sx));
+    }
+
+    public inline function setRelativeDepth(node:Node, d:Int) {
+        _scene.traverse(false);
+        depth += _scene.absDepth[node.id] + d - _scene.absDepth[id];
+    }
+
     private inline function get_id():Int {
         return id;
     }

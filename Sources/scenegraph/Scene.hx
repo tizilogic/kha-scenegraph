@@ -205,7 +205,7 @@ class Scene {
         absDepth[pid] = absDepth[parent[pid]] + depth[parent[pid]] + depth[pid];
     }
 
-    public function traverse():Bool {
+    public function traverse(?skipHidden:Bool = true):Bool {
         if (flags[0] & DIRTY == 0 || flags[0] & HIDDEN > 0) {
             return false;
         }
@@ -215,7 +215,7 @@ class Scene {
             var pid = _toProcess.pop();
             var pTrans = transform[pid];
             for (i in 1...flags.length) {
-                if (flags[i] & FREE > 0 || flags[i] & HIDDEN > 0 || parent[i] != pid ) {
+                if (flags[i] & FREE > 0 || (flags[i] & HIDDEN > 0 && skipHidden) || parent[i] != pid ) {
                     continue;
                 }
                 if (flags[i] & DIRTY > 0) {
