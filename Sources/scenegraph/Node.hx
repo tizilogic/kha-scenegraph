@@ -89,6 +89,12 @@ class Node {
     }
 
     // Getter/Setter
+    public inline function getRelativePos(node:Node):FastVector2 {
+        _scene.traverse(false);
+        var idVec = new FastVector2(1, 1);
+        return _scene.transform[id].multvec(idVec).mult(1 / _scene.pxPerUnit).sub(_scene.transform[node.id].multvec(idVec).mult(1 / _scene.pxPerUnit));
+    }
+
     public inline function setRelativePos(node:Node, x:FastFloat, y:FastFloat) {
         _scene.traverse(false);
         var idVec = new FastVector2(1, 1);
@@ -99,10 +105,29 @@ class Node {
         this.y -= delta.y;
     }
 
+    public inline function getRelativeAngle(node:Node):FastFloat {
+        _scene.traverse(false);
+        return Math.atan2(-_scene.transform[id]._01, _scene.transform[id]._00) - Math.atan2(-_scene.transform[node.id]._01, _scene.transform[node.id]._00);
+    }
+
     public inline function setRelativeAngle(node:Node, rad:FastFloat) {
         _scene.traverse(false);
         var delta = Math.atan2(-_scene.transform[node.id]._01, _scene.transform[node.id]._00);
         angle -= delta + rad + angle;
+    }
+
+    public inline function getRelativeScaleX(node:Node):FastFloat {
+        _scene.traverse(false);
+        var thisScale = Math.sqrt(Math.pow(_scene.transform[id]._00, 2) + Math.pow(_scene.transform[id]._10, 2));
+        var otherScale = Math.sqrt(Math.pow(_scene.transform[node.id]._00, 2) + Math.pow(_scene.transform[node.id]._10, 2));
+        return thisScale / otherScale;
+    }
+
+    public inline function getRelativeScaleY(node:Node):FastFloat {
+        _scene.traverse(false);
+        var thisScale = Math.sqrt(Math.pow(_scene.transform[id]._01, 2) + Math.pow(_scene.transform[id]._11, 2));
+        var otherScale = Math.sqrt(Math.pow(_scene.transform[node.id]._01, 2) + Math.pow(_scene.transform[node.id]._11, 2));
+        return thisScale / otherScale;
     }
 
     public inline function setRelativeScale(node:Node, sx:FastFloat, ?sy:FastFloat = -1) {
@@ -115,6 +140,27 @@ class Node {
         thisScale /= scaleY;
         otherScale = Math.sqrt(Math.pow(_scene.transform[node.id]._01, 2) + Math.pow(_scene.transform[node.id]._11, 2));
         scaleY = thisScale * (otherScale * (sy > 0 ? sy : sx));
+    }
+
+    public inline function setRelativeScaleX(node:Node, sx:FastFloat) {
+        _scene.traverse(false);
+        var thisScale = Math.sqrt(Math.pow(_scene.transform[id]._00, 2) + Math.pow(_scene.transform[id]._10, 2));
+        thisScale /= scaleX;
+        var otherScale = Math.sqrt(Math.pow(_scene.transform[node.id]._00, 2) + Math.pow(_scene.transform[node.id]._10, 2));
+        scaleX = thisScale * (otherScale * sx);
+    }
+
+    public inline function setRelativeScaleY(node:Node, sy:FastFloat) {
+        _scene.traverse(false);
+        var thisScale = Math.sqrt(Math.pow(_scene.transform[id]._01, 2) + Math.pow(_scene.transform[id]._11, 2));
+        thisScale /= scaleY;
+        var otherScale = Math.sqrt(Math.pow(_scene.transform[node.id]._01, 2) + Math.pow(_scene.transform[node.id]._11, 2));
+        scaleY = thisScale * (otherScale * sy);
+    }
+
+    public inline function getRelativeDepth(node:Node):Int {
+        _scene.traverse(false);
+        return _scene.absDepth[id] - _scene.absDepth[node.id];
     }
 
     public inline function setRelativeDepth(node:Node, d:Int) {
