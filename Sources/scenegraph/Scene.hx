@@ -193,8 +193,8 @@ class Scene {
     private inline function updateTransform(pid:Int, parentTransform:FastMatrix3) {
         var dx = x[pid] * pxPerUnit;
         var dy = y[pid] * pxPerUnit;
-        transform[pid] = parentTransform.multmat(FastMatrix3.scale(scaleX[pid], scaleY[pid]))
-            .multmat(FastMatrix3.translation(dx, dy));
+        transform[pid] = parentTransform.multmat(FastMatrix3.translation(dx, dy))
+            .multmat(FastMatrix3.scale(scaleX[pid], scaleY[pid]));
         if (angle[pid] != 0) {
             var hw = flags[pid] & HAS_ROT_CENTER > 0 ? rotX[pid] * pxPerUnit : (width[pid] * pxPerUnit) / 2;
             var hh = flags[pid] & HAS_ROT_CENTER > 0 ? rotY[pid] * pxPerUnit : (height[pid] * pxPerUnit) / 2;
