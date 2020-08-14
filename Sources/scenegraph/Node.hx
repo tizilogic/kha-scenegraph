@@ -88,6 +88,15 @@ class Node {
         return new Text(text, font, fontSize, color, this);
     }
 
+    public inline function inside(x:FastFloat, y:FastFloat):Bool {
+        return this.x <= x && this.x + width >= x && this.y <= y && this.y + height >= y;
+    }
+
+    public inline function overlap(x:FastFloat, y:FastFloat, w:FastFloat, h:FastFloat) {
+        return inside(x, y) || inside(x + w, y) || inside(x, y + h) || inside(x + w, y + h)
+            || (this.x >= x && this.x <= x + w && this.y >= y && this.y <= y + h);
+    }
+
     // Getter/Setter
     public inline function getRelativePos(node:Node):FastVector2 {
         _scene.traverse(false);
