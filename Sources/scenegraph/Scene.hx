@@ -242,7 +242,7 @@ class Scene {
         var g = _buffer.g2;
 
         if (traverse()) {
-            g.begin();
+            g.begin(true, bgColor);
             g.color = bgColor;
             g.fillRect(0, 0, _buffer.width, _buffer.height);
             g.color = Color.White;
