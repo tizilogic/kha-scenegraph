@@ -18,7 +18,8 @@ abstract NodeFlag (Int) to Int {
     var IS_TEXT = 8;
     var SUB_IMAGE = 16;
     var HAS_ROT_CENTER = 32;
-    var FREE = 64;
+    var HAS_COLOR = 64;
+    var FREE = 128;
 }
 
 
@@ -40,6 +41,10 @@ class Scene {
     private var _toProcess = new Array<Int>();
     public var pxPerUnit(default, null):FastFloat;
     public var bgColor = Color.Black;
+    public var bufferWidth(get, null):Int;
+    public var bufferHeight(get, null):Int;
+    public var unitWidth(get, null):FastFloat;
+    public var unitHeight(get, null):FastFloat;
     private var _buffer:Image;
 
     // Node
@@ -68,6 +73,7 @@ class Scene {
     private var sy = new Array<FastFloat>();
     private var sw = new Array<FastFloat>();
     private var sh = new Array<FastFloat>();
+    private var spriteColor = new Array<Color>();
 
     // Text
     private var text = new Array<String>();
@@ -138,7 +144,7 @@ class Scene {
         this.pxPerUnit = Math.min(_buffer.width, _buffer.height);
     }
 
-    private function insertImage(nodeId:Int, image:Image, ?rect:SourceRect = null) {
+    private function insertImage(nodeId:Int, image:Image, ?rect:SourceRect = null, ?color:Color = null) {
         var id:Int;
         var sRect:SourceRect = rect == null ? {sx:0, sy:0, sw:image.width, sh:image.height} : rect;
         if (_freeImage.length > 0) {
@@ -148,6 +154,7 @@ class Scene {
             sy[id] = sRect.sy;
             sw[id] = sRect.sw;
             sh[id] = sRect.sh;
+            spriteColor[id] = color;
         }
         else {
             id = this.image.length;
@@ -156,11 +163,15 @@ class Scene {
             sy.push(sRect.sy);
             sw.push(sRect.sw);
             sh.push(sRect.sh);
+            spriteColor.push(color);
         }
         imageId[nodeId] = id;
         _renderOrder.push(nodeId);
         width[nodeId] = sw[id] / pxPerUnit;
         height[nodeId] = sh[id] / pxPerUnit;
+        if (spriteColor[id] != null) {
+            flags[nodeId] |= HAS_COLOR;
+        }
     }
 
     private function insertText(nodeId:Int, text:String, font:Font, fontSize:FastFloat, color:Color) {
@@ -251,7 +262,13 @@ class Scene {
                 g.pushTransformation(transform[i]);
                 if (flags[i] & IS_IMAGE > 0) {
                     var id = imageId[i];
+                    if (flags[i] & HAS_COLOR > 0) {
+                        g.color = spriteColor[id];
+                    }
                     g.drawSubImage(image[id], 0, 0, sx[id], sy[id], sw[id], sh[id]);
+                    if (flags[i] & HAS_COLOR > 0) {
+                        g.color = Color.White;
+                    }
                 }
                 else if (flags[i] & IS_TEXT > 0) {
                     var id = textId[i];
@@ -355,5 +372,21 @@ class Scene {
         _free.push(nodeId);
         nodes[this].remove(nodeId);
         while (_renderOrder.remove(nodeId)) {}
+    }
+
+    private inline function get_bufferWidth():Int {
+        return _buffer.width;
+    }
+
+    private inline function get_bufferHeight():Int {
+        return _buffer.height;
+    }
+
+    private inline function get_unitWidth():FastFloat {
+        return _buffer.width / pxPerUnit;
+    }
+
+    private inline function get_unitHeight():FastFloat {
+        return _buffer.height / pxPerUnit;
     }
 }

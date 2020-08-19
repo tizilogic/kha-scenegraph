@@ -27,6 +27,8 @@ class Node {
     public var shown(get, set):Bool;
     public var width(get, set):FastFloat;
     public var height(get, set):FastFloat;
+    public var rWidth(get, null):FastFloat;
+    public var rHeight(get, null):FastFloat;
 
     public function new(?x:FastFloat = 0, ?y:FastFloat = 0, ?parent:Node = null, ?scene:Scene = null,
                         ?_root:Bool = false) {
@@ -79,8 +81,8 @@ class Node {
         return new Node(this);
     }
 
-    public function attachSprite(image:Image, ?rect:SourceRect = null):Sprite {
-        return new Sprite(image, rect, this);
+    public function attachSprite(?x:FastFloat = 0, ?y:FastFloat = 0, image:Image, ?rect:SourceRect = null):Sprite {
+        return new Sprite(x, y, image, rect, this);
     }
 
     public function attachText(?text:String = "", font:Font, fontSize:FastFloat,
@@ -89,7 +91,7 @@ class Node {
     }
 
     public inline function inside(x:FastFloat, y:FastFloat):Bool {
-        return this.x <= x && this.x + width >= x && this.y <= y && this.y + height >= y;
+        return this.x <= x && this.x + rWidth >= x && this.y <= y && this.y + rHeight >= y;
     }
 
     public inline function overlap(x:FastFloat, y:FastFloat, w:FastFloat, h:FastFloat) {
@@ -290,5 +292,13 @@ class Node {
     private function set_height(v:FastFloat):FastFloat {
         _scene.height[id] = v;
         return _scene.height[id];
+    }
+
+    private inline function get_rWidth():FastFloat {
+        return _scene.width[id] * _scene.scaleX[id];
+    }
+
+    private inline function get_rHeight():FastFloat {
+        return _scene.height[id] * _scene.scaleY[id];
     }
 }
