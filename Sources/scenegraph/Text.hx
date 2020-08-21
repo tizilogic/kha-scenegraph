@@ -67,7 +67,7 @@ class Text extends Node {
 
     private inline function updateSize() {
         var fs = Std.int(fontSize * _scene.pxPerUnit + 0.5);
-        _scene.width[_scene.textId[id]] = _scene.font[_scene.textId[id]].width(fs, text) / _scene.pxPerUnit;
-        _scene.height[_scene.textId[id]] = _scene.font[_scene.textId[id]].height(fs) / _scene.pxPerUnit;
+        _scene.width[id] = _scene.font[_scene.textId[id]].width(fs, text) / _scene.pxPerUnit;
+        _scene.height[id] = _scene.font[_scene.textId[id]].height(fs) / _scene.pxPerUnit;
     }
 }

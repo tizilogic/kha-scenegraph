@@ -34,7 +34,7 @@ class Sprite extends Node {
     }
 
     private inline function get_sx():FastFloat {
-        return _scene.sx[id];
+        return _scene.sx[_scene.imageId[id]];
     }
 
     private inline function set_sx(v:FastFloat):FastFloat {
@@ -44,7 +44,7 @@ class Sprite extends Node {
     }
 
     private inline function get_sy():FastFloat {
-        return _scene.sy[id];
+        return _scene.sy[_scene.imageId[id]];
     }
 
     private inline function set_sy(v:FastFloat):FastFloat {
@@ -54,21 +54,23 @@ class Sprite extends Node {
     }
 
     private inline function get_sw():FastFloat {
-        return _scene.sw[id];
+        return _scene.sw[_scene.imageId[id]];
     }
 
     private inline function set_sw(v:FastFloat):FastFloat {
         _scene.sw[_scene.imageId[id]] = v;
+        _scene.width[id] = v / _scene.pxPerUnit;
         _scene.propagateDirty(id);
         return v;
     }
 
     private inline function get_sh():FastFloat {
-        return _scene.sh[id];
+        return _scene.sh[_scene.imageId[id]];
     }
 
     private inline function set_sh(v:FastFloat):FastFloat {
         _scene.sh[_scene.imageId[id]] = v;
+        _scene.height[id] = v / _scene.pxPerUnit;
         _scene.propagateDirty(id);
         return v;
     }
