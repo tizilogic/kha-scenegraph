@@ -90,13 +90,30 @@ class Node {
         return new Text(text, font, fontSize, color, this);
     }
 
-    public inline function inside(x:FastFloat, y:FastFloat):Bool {
-        return this.x <= x && this.x + rWidth >= x && this.y <= y && this.y + rHeight >= y;
+    public inline function inside(ox:FastFloat, oy:FastFloat):Bool {
+        var tl = new FastVector2(0, 0);
+        var tr = new FastVector2(width * _scene.pxPerUnit, 0);
+        var bl = new FastVector2(0, height * _scene.pxPerUnit);
+        var br = new FastVector2(width * _scene.pxPerUnit, height * _scene.pxPerUnit);
+        tl = _scene.transform[id].multvec(tl);
+        tr = _scene.transform[id].multvec(tr);
+        bl = _scene.transform[id].multvec(bl);
+        br = _scene.transform[id].multvec(br);
+        var l = Math.min(tl.x / _scene.pxPerUnit, Math.min(tr.x / _scene.pxPerUnit, Math.min(bl.x / _scene.pxPerUnit, br.x / _scene.pxPerUnit)));
+        var r = Math.max(tl.x / _scene.pxPerUnit, Math.max(tr.x / _scene.pxPerUnit, Math.max(bl.x / _scene.pxPerUnit, br.x / _scene.pxPerUnit)));
+        var t = Math.min(tl.y / _scene.pxPerUnit, Math.min(tr.y / _scene.pxPerUnit, Math.min(bl.y / _scene.pxPerUnit, br.y / _scene.pxPerUnit)));
+        var b = Math.max(tl.y / _scene.pxPerUnit, Math.max(tr.y / _scene.pxPerUnit, Math.max(bl.y / _scene.pxPerUnit, br.y / _scene.pxPerUnit)));
+        return l <= ox && r >= ox && t <= oy && b >= oy;
     }
 
-    public inline function overlap(x:FastFloat, y:FastFloat, w:FastFloat, h:FastFloat) {
-        return inside(x, y) || inside(x + w, y) || inside(x, y + h) || inside(x + w, y + h)
-            || (this.x >= x && this.x <= x + w && this.y >= y && this.y <= y + h);
+    public inline function overlap(ox:FastFloat, oy:FastFloat, w:FastFloat, h:FastFloat) {
+        var r = inside(ox, oy) || inside(ox + w, oy) || inside(ox, oy + h) || inside(ox + w, oy + h);
+        if (r) {
+            return r;
+        }
+        var tl = _scene.transform[id].multvec(new FastVector2(0, 0));
+        return tl.x / _scene.pxPerUnit >= ox && tl.x / _scene.pxPerUnit <= ox + w
+            && tl.y / _scene.pxPerUnit >= oy && tl.y / _scene.pxPerUnit <= oy + h;
     }
 
     // Getter/Setter
@@ -282,6 +299,7 @@ class Node {
 
     private function set_width(v:FastFloat):FastFloat {
         _scene.width[id] = v;
+        _scene.propagateDirty(id);
         return _scene.width[id];
     }
 
@@ -291,14 +309,15 @@ class Node {
 
     private function set_height(v:FastFloat):FastFloat {
         _scene.height[id] = v;
+        _scene.propagateDirty(id);
         return _scene.height[id];
     }
 
     private inline function get_rWidth():FastFloat {
-        return _scene.width[id] * _scene.scaleX[id];
+        return _scene.width[id] * Math.sqrt(Math.pow(_scene.transform[id]._00, 2) + Math.pow(_scene.transform[id]._10, 2));
     }
 
     private inline function get_rHeight():FastFloat {
-        return _scene.height[id] * _scene.scaleY[id];
+        return _scene.height[id] * Math.sqrt(Math.pow(_scene.transform[id]._01, 2) + Math.pow(_scene.transform[id]._11, 2));
     }
 }
