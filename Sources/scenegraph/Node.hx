@@ -46,7 +46,7 @@ class Node {
             this.id = 0;
             return;
         }
-        this.id = _scene.newNode();
+        this.id = _scene.newNode(this);
         this.x = x;
         this.y = y;
         this.shown = true;

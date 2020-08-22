@@ -348,7 +348,7 @@ class Scene {
         }
     }
 
-    public function newNode():Int {
+    public function newNode(node:Node):Int {
         var id:Int;
         if (_free.length > 0) {
             id = _free.pop();
@@ -390,6 +390,7 @@ class Scene {
             imageId.push(-1);
             textId.push(-1);
         }
+        nodes[this][id] = node;
         return id;
     }
 
@@ -408,6 +409,41 @@ class Scene {
         _free.push(nodeId);
         nodes[this].remove(nodeId);
         while (_renderOrder.remove(nodeId)) {}
+    }
+
+    /**
+     * Returns all visible Node instances in this scene that contain the coordinates in their AABB.
+     * @param px
+     * @param py
+     * @param depthSorted Whether to sort highest to lowest depth.
+     * @return Array<Node>
+     */
+    public function query(px:FastFloat, py:FastFloat, ?depthSorted:Bool = true):Array<Node> {
+        var ids = new Array<Int>();
+        for (i in 1...this.x.length) {
+            if (flags[i] & HIDDEN > 0) {
+                continue;
+            }
+            var p = parent[i];
+            while (true) {
+                if (flags[i] & HIDDEN > 0) {
+                    p = -1;
+                    break;
+                }
+                if (parent[p] != p) {
+                    p = parent[p];
+                    continue;
+                }
+                break;
+            }
+            if (p > -1 && nodes[this][i].inside(px, py)) {
+                ids.push(i);
+            }
+        }
+        if (depthSorted) {
+            ids.sort(comp);
+        }
+        return [for (i in ids) nodes[this][i]];
     }
 
     private inline function get_bufferWidth():Int {
