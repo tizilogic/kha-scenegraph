@@ -16,7 +16,7 @@ abstract NodeFlag (Int) to Int {
     var HIDDEN = 2;
     var IS_IMAGE = 4;
     var IS_TEXT = 8;
-    var SUB_IMAGE = 16;
+    var IS_NESTED = 16;
     var HAS_ROT_CENTER = 32;
     var HAS_COLOR = 64;
     var FREE = 128;
@@ -40,7 +40,7 @@ class Scene {
     private var _visible:Array<Int>;
     private var _toProcess = new Array<Int>();
     public var pxPerUnit(default, null):FastFloat;
-    public var bgColor = Color.Black;
+    public var bgColor = Color.Transparent;
     public var bufferWidth(get, null):Int;
     public var bufferHeight(get, null):Int;
     public var unitWidth(get, null):FastFloat;
@@ -66,6 +66,7 @@ class Scene {
     private var parent = new Array<Int>();
     private var imageId = new Array<Int>();
     private var textId = new Array<Int>();
+    private var nestedId = new Array<Int>();
 
     // Sprite
     private var image = new Array<Image>();
@@ -81,9 +82,13 @@ class Scene {
     private var fontSize = new Array<Int>();
     private var color = new Array<Color>();
 
+    // Nested
+    private var nested = new Array<Scene>();
+
     private var _free = new Array<Int>();
     private var _freeImage = new Array<Int>();
     private var _freeText = new Array<Int>();
+    private var _freeNested = new Array<Int>();
 
 
     public function new(?buffer:Image = null, ?reserve:Int = 0) {
@@ -104,6 +109,7 @@ class Scene {
         parent.resize(reserve + 1);
         imageId.resize(reserve + 1);
         textId.resize(reserve + 1);
+        nestedId.resize(reserve + 1);
 
         // Root
         x[0] = 0;
@@ -123,6 +129,7 @@ class Scene {
         parent[0] = 0;
         imageId[0] = -1;
         textId[0] = -1;
+        nestedId[0] = -1;
 
         if (reserve > 0) {
             _free.resize(reserve);
@@ -197,6 +204,23 @@ class Scene {
         height[nodeId] = font.height(fs) / pxPerUnit;
     }
 
+    private function insertNested(nodeId:Int, rect:Rect) {
+        var id:Int;
+        var s = new Scene(Image.createRenderTarget(Std.int(pxPerUnit * rect.w + 0.5), Std.int(pxPerUnit * rect.h + 0.5)));
+        if (_freeNested.length > 0) {
+            id = _freeNested.pop();
+            nested[id] = s;
+        }
+        else {
+            id = this.nested.length;
+            this.nested.push(s);
+        }
+        nestedId[nodeId] = id;
+        _renderOrder.push(nodeId);
+        width[nodeId] = rect.w;
+        height[nodeId] = rect.h;
+    }
+
     private function get_root():Node {
         return nodes[this][0];
     }
@@ -231,10 +255,13 @@ class Scene {
                 }
                 if (flags[i] & DIRTY > 0) {
                     updateTransform(i, pTrans);
+                    if (flags[i] & IS_NESTED > 0) {
+                        nested[nestedId[i]].render();
+                    }
                 }
                 _toProcess.push(i);
             }
-            if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) > 0) {
+            if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) + (flags[pid] & IS_NESTED) > 0) {
                 _renderOrder[cursor] = pid;
                 ++cursor;
             }
@@ -278,6 +305,11 @@ class Scene {
                     g.fontSize = fontSize[id];
                     g.drawString(text[id], 0, 0);
                     g.color = prevColor;
+                }
+                else if (flags[i] & IS_NESTED > 0) {
+                    var id = nestedId[i];
+                    g.drawImage(nested[id]._buffer, 0, 0);
+                    trace("here");
                 }
                 g.popTransformation();
                 g.popOpacity();
@@ -367,6 +399,10 @@ class Scene {
         }
         else if (flags[nodeId] & IS_TEXT > 0) {
             _freeText.push(textId[nodeId]);
+        }
+        else if (flags[nodeId] & IS_NESTED > 0) {
+            _freeNested.push(nestedId[nodeId]);
+            nested[nestedId[nodeId]] = null;
         }
         flags[nodeId] = FREE;
         _free.push(nodeId);

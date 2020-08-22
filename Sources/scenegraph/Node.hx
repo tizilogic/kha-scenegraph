@@ -6,6 +6,7 @@ import kha.FastFloat;
 import kha.math.FastVector2;
 import kha.Font;
 import kha.Image;
+import scenegraph.NestedScene;
 import scenegraph.Scene;
 import scenegraph.Sprite;
 import scenegraph.Text;
@@ -88,6 +89,10 @@ class Node {
     public function attachText(?text:String = "", font:Font, fontSize:FastFloat,
                                ?color:Color = Color.White):Text {
         return new Text(text, font, fontSize, color, this);
+    }
+
+    public function attachNested(?x:FastFloat = 0, ?y:FastFloat = 0, rect:Rect):NestedScene {
+        return new NestedScene(x, y, rect, this);
     }
 
     public inline function inside(ox:FastFloat, oy:FastFloat):Bool {
