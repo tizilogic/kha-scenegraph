@@ -325,4 +325,17 @@ class Node {
     private inline function get_rHeight():FastFloat {
         return _scene.height[id] * Math.sqrt(Math.pow(_scene.transform[id]._01, 2) + Math.pow(_scene.transform[id]._11, 2));
     }
+
+    public function toString():String {
+        if (_scene.flags[id] & IS_IMAGE > 0) {
+            return "Sprite " + id;
+        }
+        if (_scene.flags[id] & IS_TEXT > 0) {
+            return "Text " + id;
+        }
+        if (_scene.flags[id] & IS_NESTED > 0) {
+            return "NestedScene " + id;
+        }
+        return "Node " + id;
+    }
 }

@@ -461,4 +461,8 @@ class Scene {
     private inline function get_unitHeight():FastFloat {
         return _buffer.height / pxPerUnit;
     }
+
+    public function toString():String {
+        return "Scene " + _buffer.width + "x" + _buffer.height + ": " + x.length + " Nodes.";
+    }
 }
