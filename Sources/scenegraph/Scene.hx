@@ -309,7 +309,6 @@ class Scene {
                 else if (flags[i] & IS_NESTED > 0) {
                     var id = nestedId[i];
                     g.drawImage(nested[id]._buffer, 0, 0);
-                    trace("here");
                 }
                 g.popTransformation();
                 g.popOpacity();

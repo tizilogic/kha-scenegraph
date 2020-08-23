@@ -82,8 +82,8 @@ class Node {
         return new Node(this);
     }
 
-    public function attachSprite(?x:FastFloat = 0, ?y:FastFloat = 0, image:Image, ?rect:SourceRect = null):Sprite {
-        return new Sprite(x, y, image, rect, this);
+    public function attachSprite(?x:FastFloat = 0, ?y:FastFloat = 0, image:Image, ?rect:SourceRect = null, ?color:Color = null):Sprite {
+        return new Sprite(x, y, image, rect, this, color);
     }
 
     public function attachText(?text:String = "", font:Font, fontSize:FastFloat,

@@ -17,10 +17,10 @@ class Sprite extends Node {
     public var color(get, set):Color;
 
     public function new(?x:FastFloat = 0, ?y:FastFloat = 0, image:Image, ?rect:SourceRect = null,
-                        ?parent:Node = null, ?scene:Scene = null) {
+                        ?parent:Node = null, ?scene:Scene = null, ?color:Color = null) {
         super(x, y, parent, scene);
         _scene.flags[id] = _scene.flags[id] | IS_IMAGE;
-        _scene.insertImage(id, image, rect);
+        _scene.insertImage(id, image, rect, color);
     }
 
     private inline function get_image():Image {
