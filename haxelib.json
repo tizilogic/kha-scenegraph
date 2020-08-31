@@ -8,7 +8,8 @@
 	"releasenote": "Initial release.",
 	"contributors": ["tcdude"],
 	"dependencies": {
-		"kha": ""
+		"kha": "",
+		"kha-sdf-painter": ""
 	},
 	"classPath": "Sources"
 }
