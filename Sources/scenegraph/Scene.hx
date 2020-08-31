@@ -46,6 +46,7 @@ class Scene {
     public var unitWidth(get, null):FastFloat;
     public var unitHeight(get, null):FastFloat;
     private var _buffer:Image;
+    private var _sdf:SDFPainter;
 
     // Node
     private static var nodes = new Map<Scene, Map<Int, Node>>();
@@ -148,6 +149,7 @@ class Scene {
         else {
             _buffer = buffer;
         }
+        _sdf = new SDFPainter(_buffer);
         this.pxPerUnit = Math.min(_buffer.width, _buffer.height);
     }
 
@@ -283,43 +285,41 @@ class Scene {
     }
 
     public function render():Image {
-        var g = _buffer.g2;
-
         if (traverse()) {
-            g.begin(true, bgColor);
-            g.color = bgColor;
-            g.fillRect(0, 0, _buffer.width, _buffer.height);
-            g.color = Color.White;
+            _sdf.begin(true, bgColor);
+            _sdf.color = bgColor;
+            _sdf.fillRect(0, 0, _buffer.width, _buffer.height);
+            _sdf.color = Color.White;
             for (i in _visible) {
-                g.pushOpacity(alpha[i]);
-                g.pushTransformation(transform[i]);
+                _sdf.pushOpacity(alpha[i]);
+                _sdf.pushTransformation(transform[i]);
                 if (flags[i] & IS_IMAGE > 0) {
                     var id = imageId[i];
                     if (flags[i] & HAS_COLOR > 0) {
-                        g.color = spriteColor[id];
+                        _sdf.color = spriteColor[id];
                     }
-                    g.drawSubImage(image[id], 0, 0, sx[id], sy[id], sw[id], sh[id]);
+                    _sdf.drawSubImage(image[id], 0, 0, sx[id], sy[id], sw[id], sh[id]);
                     if (flags[i] & HAS_COLOR > 0) {
-                        g.color = Color.White;
+                        _sdf.color = Color.White;
                     }
                 }
                 else if (flags[i] & IS_TEXT > 0) {
                     var id = textId[i];
-                    var prevColor = g.color;
-                    g.color = color[id];
-                    g.font = font[id];
-                    g.fontSize = fontSize[id];
-                    g.drawString(text[id], 0, 0);
-                    g.color = prevColor;
+                    var prevColor = _sdf.color;
+                    _sdf.color = color[id];
+                    _sdf.font = font[id];
+                    _sdf.fontSize = fontSize[id];
+                    _sdf.drawString(text[id], 0, 0);
+                    _sdf.color = prevColor;
                 }
                 else if (flags[i] & IS_NESTED > 0) {
                     var id = nestedId[i];
-                    g.drawImage(nested[id]._buffer, 0, 0);
+                    _sdf.drawImage(nested[id]._buffer, 0, 0);
                 }
-                g.popTransformation();
-                g.popOpacity();
+                _sdf.popTransformation();
+                _sdf.popOpacity();
             }
-            g.end();
+            _sdf.end();
         }
         return _buffer;
     }
