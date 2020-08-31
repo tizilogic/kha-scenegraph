@@ -1,11 +1,14 @@
 package scenegraph;
 
+import SDFPainter.CornerRadius;
 import kha.Color;
 import kha.FastFloat;
 import kha.Font;
 import kha.Image;
 import kha.System;
 import kha.math.FastMatrix3;
+import SDFPainter;
+
 import scenegraph.Types;
 import scenegraph.Node;
 
@@ -14,12 +17,13 @@ import scenegraph.Node;
 abstract NodeFlag (Int) to Int {
     var DIRTY = 1;
     var HIDDEN = 2;
-    var IS_IMAGE = 4;
-    var IS_TEXT = 8;
-    var IS_NESTED = 16;
-    var HAS_ROT_CENTER = 32;
-    var HAS_COLOR = 64;
-    var FREE = 128;
+    var HAS_ROT_CENTER = 4;
+    var HAS_COLOR = 8;
+    var FREE = 16;
+    var IS_IMAGE = 32;
+    var IS_TEXT = 64;
+    var IS_NESTED = 128;
+    var IS_TILE = 256;
 }
 
 
@@ -68,6 +72,7 @@ class Scene {
     private var imageId = new Array<Int>();
     private var textId = new Array<Int>();
     private var nestedId = new Array<Int>();
+    private var tileId = new Array<Int>();
 
     // Sprite
     private var image = new Array<Image>();
@@ -86,10 +91,20 @@ class Scene {
     // Nested
     private var nested = new Array<Scene>();
 
+    // Tile
+    private var tileColor = new Array<Color>();
+    private var tileBorderColor = new Array<Color>();
+    private var tileBorder = new Array<FastFloat>();
+    private var tileCTR = new Array<FastFloat>();
+    private var tileCBR = new Array<Null<FastFloat>>();
+    private var tileCTL = new Array<Null<FastFloat>>();
+    private var tileCBL = new Array<Null<FastFloat>>();
+
     private var _free = new Array<Int>();
     private var _freeImage = new Array<Int>();
     private var _freeText = new Array<Int>();
     private var _freeNested = new Array<Int>();
+    private var _freeTile = new Array<Int>();
 
 
     public function new(?buffer:Image = null, ?reserve:Int = 0) {
@@ -111,6 +126,7 @@ class Scene {
         imageId.resize(reserve + 1);
         textId.resize(reserve + 1);
         nestedId.resize(reserve + 1);
+        tileId.resize(reserve + 1);
 
         // Root
         x[0] = 0;
@@ -131,6 +147,7 @@ class Scene {
         imageId[0] = -1;
         textId[0] = -1;
         nestedId[0] = -1;
+        tileId[0] = -1;
 
         if (reserve > 0) {
             _free.resize(reserve);
@@ -223,6 +240,32 @@ class Scene {
         height[nodeId] = rect.h;
     }
 
+    private function insertTile(nodeId:Int, corner:CornerRadius, color:Color, ?border:FastFloat = 0, ?borderColor:Color = null) {
+        var id:Int;
+        if (_freeTile.length > 0) {
+            id = _freeTile.pop();
+            tileColor[id] = color;
+            tileBorderColor[id] = borderColor != null ? borderColor : color;
+            tileBorder[id] = border;
+            tileCTR[id] = corner.tr;
+            tileCBR[id] = corner.br;
+            tileCTL[id] = corner.tl;
+            tileCBL[id] = corner.bl;
+        }
+        else {
+            id = this.nested.length;
+            tileColor.push(color);
+            tileBorderColor.push(borderColor != null ? borderColor : color);
+            tileBorder.push(border);
+            tileCTR.push(corner.tr);
+            tileCBR.push(corner.br);
+            tileCTL.push(corner.tl);
+            tileCBL.push(corner.bl);
+        }
+        tileId[nodeId] = id;
+        _renderOrder.push(nodeId);
+    }
+
     private function get_root():Node {
         return nodes[this][0];
     }
@@ -269,7 +312,7 @@ class Scene {
                 }
                 _toProcess.push(i);
             }
-            if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) + (flags[pid] & IS_NESTED) > 0) {
+            if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) + (flags[pid] & IS_NESTED) + (flags[pid] & IS_TILE) > 0) {
                 _renderOrder[cursor] = pid;
                 ++cursor;
             }
@@ -281,7 +324,13 @@ class Scene {
     }
 
     private inline function comp(x:Int, y:Int):Int {
-        return absDepth[x] == absDepth[y] ? 0 : absDepth[x] > absDepth[y] ? 1 : -1;
+        if (absDepth[x] == absDepth[y]) {
+            return flags[x] == flags[y] ? 0 : flags[x] > flags[y] ? 1 : -1;
+        }
+        else if (absDepth[x] > absDepth[y]) {
+            return 1;
+        }
+        return -1;
     }
 
     public function render():Image {
@@ -315,6 +364,17 @@ class Scene {
                 else if (flags[i] & IS_NESTED > 0) {
                     var id = nestedId[i];
                     _sdf.drawImage(nested[id]._buffer, 0, 0);
+                }
+                else if (flags[i] & IS_TILE > 0) {
+                    var id = tileId[i];
+                    var prevColor = _sdf.color;
+                    var tr = tileCTR[id] * pxPerUnit;
+                    var br = tileCBR[id] != null ? tileCBR[id] * pxPerUnit : tr;
+                    var tl = tileCTL[id] != null ? tileCTL[id] * pxPerUnit : tr;
+                    var bl = tileCBL[id] != null ? tileCBL[id] * pxPerUnit : tr;
+                    _sdf.color = tileColor[id];
+                    _sdf.sdfRect(0, 0, width[i] * pxPerUnit, height[i] * pxPerUnit, {tr:tr, br:br, tl:tl, bl:bl}, tileBorder[id] * pxPerUnit, tileBorderColor[id], 2.2);
+                    _sdf.color = prevColor;
                 }
                 _sdf.popTransformation();
                 _sdf.popOpacity();
@@ -409,6 +469,9 @@ class Scene {
         else if (flags[nodeId] & IS_NESTED > 0) {
             _freeNested.push(nestedId[nodeId]);
             nested[nestedId[nodeId]] = null;
+        }
+        else if (flags[nodeId] & IS_TILE > 0) {
+            _freeTile.push(tileId[nodeId]);
         }
         flags[nodeId] = FREE;
         _free.push(nodeId);
