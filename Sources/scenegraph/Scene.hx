@@ -204,9 +204,9 @@ class Scene {
         height[nodeId] = font.height(fs) / pxPerUnit;
     }
 
-    private function insertNested(nodeId:Int, rect:Rect) {
+    private function insertNested(nodeId:Int, rect:Rect, ?nScene:Scene = null) {
         var id:Int;
-        var s = new Scene(Image.createRenderTarget(Std.int(pxPerUnit * rect.w + 0.5), Std.int(pxPerUnit * rect.h + 0.5)));
+        var s = nScene == null? new Scene(Image.createRenderTarget(Std.int(pxPerUnit * rect.w + 0.5), Std.int(pxPerUnit * rect.h + 0.5))) : nScene;
         if (_freeNested.length > 0) {
             id = _freeNested.pop();
             nested[id] = s;
@@ -237,7 +237,12 @@ class Scene {
                 .multmat(FastMatrix3.rotation(angle[pid]))
                 .multmat(FastMatrix3.translation(-hw, -hh));
         }
-        absDepth[pid] = absDepth[parent[pid]] + depth[parent[pid]] + depth[pid];
+        if (pid != parent[pid]) {
+            absDepth[pid] = absDepth[parent[pid]] + depth[parent[pid]] + depth[pid];
+        }
+        else {
+            absDepth[pid] = depth[pid];
+        }
     }
 
     public function traverse(?skipHidden:Bool = true):Bool {
@@ -246,6 +251,7 @@ class Scene {
         }
         var cursor = 0;
         _toProcess.push(0);
+        updateTransform(0, FastMatrix3.identity());
         while (_toProcess.length > 0) {
             var pid = _toProcess.pop();
             var pTrans = transform[pid];

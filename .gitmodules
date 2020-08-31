@@ -1,0 +1,3 @@
+[submodule "kha-sdf-painter"]
+	path = kha-sdf-painter
+	url = git@github.com:tizilogic/kha-sdf-painter.git
