@@ -6,10 +6,13 @@ import kha.FastFloat;
 import kha.math.FastVector2;
 import kha.Font;
 import kha.Image;
+import SDFPainter;
+
 import scenegraph.NestedScene;
 import scenegraph.Scene;
 import scenegraph.Sprite;
 import scenegraph.Text;
+import scenegraph.Tile;
 import scenegraph.Types;
 
 
@@ -93,6 +96,10 @@ class Node {
 
     public function attachNested(?x:FastFloat = 0, ?y:FastFloat = 0, rect:Rect):NestedScene {
         return new NestedScene(x, y, rect, this);
+    }
+
+    public function attachTile(?x:FastFloat = 0, ?y:FastFloat = 0, width:FastFloat, height:FastFloat, corner:CornerRadius, color:Color, ?border:FastFloat = 0, ?borderColor:Color = null):Tile {
+        return new Tile(x, y, width, height, corner, color, border, borderColor, this);
     }
 
     public inline function inside(ox:FastFloat, oy:FastFloat):Bool {
