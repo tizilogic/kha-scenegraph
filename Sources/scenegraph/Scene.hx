@@ -43,6 +43,7 @@ class Scene {
     private var _renderOrder = new Array<Int>();
     private var _visible:Array<Int>;
     private var _toProcess = new Array<Int>();
+    private var _parentNode:Node;
     public var pxPerUnit(default, null):FastFloat;
     public var bgColor = Color.Transparent;
     public var bufferWidth(get, null):Int;
@@ -410,6 +411,11 @@ class Scene {
             if (parent[pid] != pid) {
                 _toProcess.push(parent[pid]);
             }
+        }
+
+        // Propagate to parent scene
+        if (_parentNode != null) {
+            _parentNode._scene.propagateDirty(_parentNode.id);
         }
     }
 

@@ -16,6 +16,7 @@ import scenegraph.Tile;
 import scenegraph.Types;
 
 
+@:allow(scenegraph.Scene)
 class Node {
     private var _scene:Scene;
 
