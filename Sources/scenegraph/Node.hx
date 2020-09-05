@@ -8,6 +8,7 @@ import kha.Font;
 import kha.Image;
 import SDFPainter;
 
+import scenegraph.FmtText;
 import scenegraph.NestedScene;
 import scenegraph.Scene;
 import scenegraph.Sprite;
@@ -101,6 +102,10 @@ class Node {
 
     public function attachTile(?x:FastFloat = 0, ?y:FastFloat = 0, width:FastFloat, height:FastFloat, corner:CornerRadius, color:Color, ?border:FastFloat = 0, ?borderColor:Color = null):Tile {
         return new Tile(x, y, width, height, corner, color, border, borderColor, this);
+    }
+
+    public function attachFmtText(?x:FastFloat = 0, ?y:FastFloat = 0, xmlText:String, defaultFont:Font, ?defaultSz:Null<FastFloat> = null, ?defaultColor:Color = Color.White, ?align:HAlign = LEFT):FmtText {
+        return new FmtText(x, y, xmlText, defaultFont, defaultSz, defaultColor, align, this);
     }
 
     public inline function inside(ox:FastFloat, oy:FastFloat):Bool {
