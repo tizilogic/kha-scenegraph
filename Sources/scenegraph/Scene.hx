@@ -254,7 +254,7 @@ class Scene {
             tileCBL[id] = corner.bl;
         }
         else {
-            id = this.nested.length;
+            id = this.tileColor.length;
             tileColor.push(color);
             tileBorderColor.push(borderColor != null ? borderColor : color);
             tileBorder.push(border);
