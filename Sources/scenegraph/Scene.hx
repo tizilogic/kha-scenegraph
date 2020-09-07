@@ -428,8 +428,8 @@ class Scene {
             height[id] = 0;
             rotX[id] = 0;
             rotY[id] = 0;
-            scaleX[id] = 0;
-            scaleY[id] = 0;
+            scaleX[id] = 1;
+            scaleY[id] = 1;
             depth[id] = 0;
             absDepth[id] = 0;
             alpha[id] = 1;
