@@ -283,7 +283,7 @@ class Scene {
                 .multmat(FastMatrix3.translation(-hw, -hh));
         }
         if (pid != parent[pid]) {
-            absDepth[pid] = absDepth[parent[pid]] + depth[parent[pid]] + depth[pid];
+            absDepth[pid] = absDepth[parent[pid]] + depth[pid];
         }
         else {
             absDepth[pid] = depth[pid];
