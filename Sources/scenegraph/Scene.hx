@@ -1,6 +1,5 @@
 package scenegraph;
 
-import SDFPainter.CornerRadius;
 import kha.Color;
 import kha.FastFloat;
 import kha.Font;
@@ -254,7 +253,7 @@ class Scene {
             tileCBL[id] = corner.bl;
         }
         else {
-            id = this.tileColor.length;
+            id = tileColor.length;
             tileColor.push(color);
             tileBorderColor.push(borderColor != null ? borderColor : color);
             tileBorder.push(border);
@@ -440,6 +439,8 @@ class Scene {
             parent[id] = id;
             imageId[id] = -1;
             textId[id] = -1;
+            nestedId[id] = -1;
+            tileId[id] = -1;
         }
         else {
             id = x.length;
@@ -460,6 +461,8 @@ class Scene {
             parent.push(id);
             imageId.push(-1);
             textId.push(-1);
+            nestedId.push(-1);
+            tileId.push(-1);
         }
         nodes[this][id] = node;
         return id;
