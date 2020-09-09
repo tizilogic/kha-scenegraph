@@ -7,6 +7,7 @@ import kha.FastFloat;
 import kha.Font;
 import scenegraph.Scene;
 import scenegraph.Node;
+import scenegraph.Types;
 
 
 class Text extends Node {
