@@ -235,6 +235,7 @@ class Scene {
             this.nested.push(s);
         }
         nestedId[nodeId] = id;
+        nested[id]._parentNode = nodes[this][nodeId];
         _renderOrder.push(nodeId);
         width[nodeId] = rect.w;
         height[nodeId] = rect.h;
