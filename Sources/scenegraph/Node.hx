@@ -35,6 +35,7 @@ class Node {
     public var height(get, set):FastFloat;
     public var rWidth(get, null):FastFloat;
     public var rHeight(get, null):FastFloat;
+    public var rPos(get, null):FastVector2;
 
     public function new(?x:FastFloat = 0, ?y:FastFloat = 0, ?parent:Node = null, ?scene:Scene = null,
                         ?_root:Bool = false) {
@@ -337,6 +338,10 @@ class Node {
 
     private inline function get_rHeight():FastFloat {
         return _scene.height[id] * Math.sqrt(Math.pow(_scene.transform[id]._01, 2) + Math.pow(_scene.transform[id]._11, 2));
+    }
+
+    private inline function get_rPos():FastVector2 {
+        return _scene.transform[id].multvec(new FastVector2()).div(_scene.pxPerUnit);
     }
 
     public function toString():String {
