@@ -66,20 +66,20 @@ class Scene {
     private var sy = new Array<FastFloat>();
     private var sw = new Array<FastFloat>();
     private var sh = new Array<FastFloat>();
-    private var spriteColor = new Array<Color>();
+    private var spriteColor = new Array<Null<Color>>();
 
     // Text
     private var text = new Array<String>();
     private var font = new Array<Font>();
     private var fontSize = new Array<Int>();
-    private var color = new Array<Color>();
+    private var color = new Array<Null<Color>>();
 
     // Nested
     private var nested = new Array<Scene>();
 
     // Tile
-    private var tileColor = new Array<Color>();
-    private var tileBorderColor = new Array<Color>();
+    private var tileColor = new Array<Null<Color>>();
+    private var tileBorderColor = new Array<Null<Color>>();
     private var tileBorder = new Array<FastFloat>();
     private var tileCTR = new Array<FastFloat>();
     private var tileCBR = new Array<Null<FastFloat>>();

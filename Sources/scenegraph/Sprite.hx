@@ -14,10 +14,10 @@ class Sprite extends Node {
     public var sy(get, set):FastFloat;
     public var sw(get, set):FastFloat;
     public var sh(get, set):FastFloat;
-    public var color(get, set):Color;
+    public var color(get, set):Null<Color>;
 
     public function new(?x:FastFloat = 0, ?y:FastFloat = 0, image:Image, ?rect:SourceRect = null,
-                        ?parent:Node = null, ?scene:Scene = null, ?color:Color = null) {
+                        ?parent:Node = null, ?scene:Scene = null, ?color:Null<Color> = null) {
         super(x, y, parent, scene);
         _scene.flags[id] = _scene.flags[id] | IS_IMAGE;
         _scene.insertImage(id, image, rect, color);
@@ -75,11 +75,11 @@ class Sprite extends Node {
         return v;
     }
 
-    private inline function get_color():Color {
+    private inline function get_color():Null<Color> {
         return _scene.spriteColor[_scene.imageId[id]];
     }
 
-    private inline function set_color(v:Color):Color {
+    private inline function set_color(v:Null<Color>):Null<Color> {
         if (v == null && _scene.flags[id] & HAS_COLOR > 0) {
             _scene.flags[id] ^= HAS_COLOR;
         }
