@@ -36,6 +36,7 @@ class Node {
     public var rWidth(get, null):FastFloat;
     public var rHeight(get, null):FastFloat;
     public var rPos(get, null):FastVector2;
+    public var parent(get, null):Node;
 
     public function new(?x:FastFloat = 0, ?y:FastFloat = 0, ?parent:Node = null, ?scene:Scene = null,
                         ?_root:Bool = false) {
@@ -82,6 +83,7 @@ class Node {
         }
         _scene.parent[id] = parent.id;
         _scene.propagateDirty(id);
+        this.parent = parent;
     }
 
     public function attachNode():Node {
@@ -136,6 +138,10 @@ class Node {
     }
 
     // Getter/Setter
+    public inline function get_parent():Node {
+        return this.parent;
+    }
+
     public inline function getRelativePos(node:Node):FastVector2 {
         _scene.traverse(false);
         var idVec = new FastVector2(1, 1);
