@@ -40,6 +40,7 @@ class Scene {
 
     // Node
     private static var nodes = new Map<Scene, Map<Int, Node>>();
+    private var name = new Array<String>();
     private var x = new Array<FastFloat>();
     private var y = new Array<FastFloat>();
     private var width = new Array<FastFloat>();
@@ -409,6 +410,7 @@ class Scene {
         var id:Int;
         if (_free.length > 0) {
             id = _free.pop();
+            name[id] = null;
             x[id] = 0;
             y[id] = 0;
             width[id] = 0;
@@ -431,6 +433,7 @@ class Scene {
         }
         else {
             id = x.length;
+            name.push(null);
             x.push(0);
             y.push(0);
             width.push(0);

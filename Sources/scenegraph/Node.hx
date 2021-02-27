@@ -22,6 +22,7 @@ class Node {
     private var _scene:Scene;
 
     public var id(get, null):Int;
+    public var name(get, set):String;
     public var x(get, set):FastFloat;
     public var y(get, set):FastFloat;
     public var scale(null, set):FastFloat;
@@ -39,7 +40,7 @@ class Node {
     public var parent(get, null):Node;
 
     public function new(?x:FastFloat = 0, ?y:FastFloat = 0, ?parent:Node = null, ?scene:Scene = null,
-                        ?_root:Bool = false) {
+                        ?_root:Bool = false, ?name:String = null) {
         if (scene == null && parent == null) {
             _scene = Scene.defaultInstance();
         }
@@ -63,6 +64,7 @@ class Node {
         else {
             _scene.propagateDirty(this.id);
         }
+        _scene.name[this.id] = name;
     }
 
     public static function fromId(id:Int, ?scene:Scene = null):Node {
@@ -225,6 +227,15 @@ class Node {
         return id;
     }
 
+    private inline function get_name():String {
+        return _scene.name[id];
+    }
+
+    private inline function set_name(v:String):String {
+        _scene.name[id] = v;
+        return _scene.name[id];
+    }
+
     private inline function get_x():FastFloat {
         return _scene.x[id];
     }
@@ -351,15 +362,23 @@ class Node {
     }
 
     public function toString():String {
+        var nType = "Node";
         if (_scene.flags[id] & IS_IMAGE > 0) {
-            return "Sprite " + id;
+            nType = "Sprite";
         }
-        if (_scene.flags[id] & IS_TEXT > 0) {
-            return "Text " + id;
+        else if (_scene.flags[id] & IS_TEXT > 0) {
+            nType = "Text";
         }
-        if (_scene.flags[id] & IS_NESTED > 0) {
-            return "NestedScene " + id;
+        else if (_scene.flags[id] & IS_NESTED > 0) {
+            nType = "NestedScene";
         }
-        return "Node " + id;
+        else if (_scene.flags[id] & IS_TILE > 0) {
+            nType = "Tile";
+        }
+
+        if (_scene.name[id] != null) {
+            return _scene.name[id] + " [" + nType + " " + id + "]";
+        }
+        return id + " (" + nType + ")";
     }
 }

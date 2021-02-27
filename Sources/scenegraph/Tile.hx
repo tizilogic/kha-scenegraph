@@ -18,8 +18,8 @@ class Tile extends Node {
     public var tl(get, set):FastFloat;
     public var bl(get, set):FastFloat;
 
-    public function new(?x:FastFloat = 0, ?y:FastFloat = 0, width:FastFloat, height:FastFloat, corner:CornerRadius, color:Color, ?border:FastFloat = 0, ?borderColor:Color = null, ?parent:Node = null, ?scene:Scene = null) {
-        super(x, y, parent, scene);
+    public function new(?x:FastFloat = 0, ?y:FastFloat = 0, width:FastFloat, height:FastFloat, corner:CornerRadius, color:Color, ?border:FastFloat = 0, ?borderColor:Color = null, ?parent:Node = null, ?scene:Scene = null, ?name:String = null) {
+        super(x, y, parent, scene, name);
         _scene.flags[id] |= IS_TILE;
         _scene.insertTile(id, corner, color, border, borderColor);
         _scene.width[id] = width;

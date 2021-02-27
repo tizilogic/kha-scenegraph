@@ -17,8 +17,8 @@ class Text extends Node {
     public var color(get, set):Color;
 
     public function new(?x:FastFloat = 0, ?y:FastFloat = 0, ?text:String = "", font:Font, fontSize:FastFloat,
-                        ?color:Color = Color.White, ?parent:Node = null, ?scene:Scene = null) {
-        super(x, y, parent, scene);
+                        ?color:Color = Color.White, ?parent:Node = null, ?scene:Scene = null, ?name:String = null) {
+        super(x, y, parent, scene, name);
         _scene.flags[id] = _scene.flags[id] | IS_TEXT;
         _scene.insertText(id, text, font, fontSize, color);
     }

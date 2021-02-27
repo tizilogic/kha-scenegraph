@@ -17,8 +17,8 @@ class Sprite extends Node {
     public var color(get, set):Null<Color>;
 
     public function new(?x:FastFloat = 0, ?y:FastFloat = 0, image:Image, ?rect:SourceRect = null,
-                        ?parent:Node = null, ?scene:Scene = null, ?color:Null<Color> = null) {
-        super(x, y, parent, scene);
+                        ?parent:Node = null, ?scene:Scene = null, ?color:Null<Color> = null, ?name:String = null) {
+        super(x, y, parent, scene, name);
         _scene.flags[id] = _scene.flags[id] | IS_IMAGE;
         _scene.insertImage(id, image, rect, color);
     }
