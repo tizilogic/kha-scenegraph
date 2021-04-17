@@ -228,6 +228,14 @@ class Scene {
         height[nodeId] = rect.h;
     }
 
+    private function resizeNested(nodeId:Int, rect:Rect) {
+        var id = nestedId[nodeId];
+        var s = nested[id];
+        s._buffer.unload();
+        s._buffer = Image.createRenderTarget(Std.int(pxPerUnit * rect.w + 0.5), Std.int(pxPerUnit * rect.h + 0.5));
+        s.propagateDirty(s.root.id);
+    }
+
     private function insertTile(nodeId:Int, corner:CornerRadius, color:Color, ?border:FastFloat = 0, ?borderColor:Color = null) {
         var id:Int;
         if (_freeTile.length > 0) {

@@ -25,4 +25,14 @@ class NestedScene extends Node {
     private inline function get_root():Node {
         return scene.root;
     }
+
+    private override function set_width(v:FastFloat):FastFloat {
+        _scene.resizeNested(id, {w:v, h:height});
+        return v;
+    }
+
+    private override function set_height(v:FastFloat):FastFloat {
+        _scene.resizeNested(id, {w:width, h:v});
+        return v;
+    }
 }
