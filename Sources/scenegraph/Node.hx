@@ -14,6 +14,7 @@ import scenegraph.Scene;
 import scenegraph.Sprite;
 import scenegraph.Text;
 import scenegraph.Tile;
+import scenegraph.Circle;
 import scenegraph.Types;
 
 
@@ -113,7 +114,17 @@ class Node {
         return new FmtText(x, y, xmlText, defaultFont, defaultSz, defaultColor, align, this);
     }
 
+    public function attachCircle(?x:FastFloat = 0, ?y:FastFloat = 0, radius:FastFloat, color:Color, ?border:FastFloat = 0, ?borderColor:Color = null):Circle {
+        return new Circle(x, y, radius, color, border, borderColor, this);
+    }
+
     public inline function inside(ox:FastFloat, oy:FastFloat):Bool {
+        if (_scene.flags[id] & IS_CIRCLE > 0) {
+            var center = new FastVector2(x, y);
+            var point = new FastVector2(ox, oy);
+            var delta = center.sub(point).length;
+            return delta <= _scene.circleRadius[_scene.circleId[id]];
+        }
         var tl = new FastVector2(0, 0);
         var tr = new FastVector2(width * _scene.pxPerUnit, 0);
         var bl = new FastVector2(0, height * _scene.pxPerUnit);

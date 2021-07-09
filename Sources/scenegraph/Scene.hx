@@ -60,6 +60,7 @@ class Scene {
     private var textId = new Array<Int>();
     private var nestedId = new Array<Int>();
     private var tileId = new Array<Int>();
+    private var circleId = new Array<Int>();
 
     // Sprite
     private var image = new Array<Image>();
@@ -87,11 +88,18 @@ class Scene {
     private var tileCTL = new Array<Null<FastFloat>>();
     private var tileCBL = new Array<Null<FastFloat>>();
 
+    // Circle
+    private var circleColor = new Array<Null<Color>>();
+    private var circleBorderColor = new Array<Null<Color>>();
+    private var circleBorder = new Array<FastFloat>();
+    private var circleRadius = new Array<FastFloat>();
+
     private var _free = new Array<Int>();
     private var _freeImage = new Array<Int>();
     private var _freeText = new Array<Int>();
     private var _freeNested = new Array<Int>();
     private var _freeTile = new Array<Int>();
+    private var _freeCircle = new Array<Int>();
 
 
     public function new(?buffer:Image = null, ?reserve:Int = 0) {
@@ -114,6 +122,7 @@ class Scene {
         textId.resize(reserve + 1);
         nestedId.resize(reserve + 1);
         tileId.resize(reserve + 1);
+        circleId.resize(reserve + 1);
 
         // Root
         x[0] = 0;
@@ -135,6 +144,7 @@ class Scene {
         textId[0] = -1;
         nestedId[0] = -1;
         tileId[0] = -1;
+        circleId[0] = -1;
 
         if (reserve > 0) {
             _free.resize(reserve);
@@ -262,6 +272,26 @@ class Scene {
         _renderOrder.push(nodeId);
     }
 
+    private function insertCircle(nodeId:Int, radius:FastFloat, color:Color, ?border:FastFloat = 0, ?borderColor:Color = null) {
+        var id:Int;
+        if (_freeCircle.length > 0) {
+            id = _freeCircle.pop();
+            circleColor[id] = color;
+            circleBorderColor[id] = borderColor != null ? borderColor : color;
+            circleBorder[id] = border;
+            circleRadius[id] = radius;
+        }
+        else {
+            id = circleColor.length;
+            circleColor.push(color);
+            circleBorderColor.push(borderColor != null ? borderColor : color);
+            circleBorder.push(border);
+            circleRadius.push(radius);
+        }
+        circleId[nodeId] = id;
+        _renderOrder.push(nodeId);
+    }
+
     private function get_root():Node {
         return nodes[this][0];
     }
@@ -308,7 +338,7 @@ class Scene {
                 }
                 _toProcess.push(i);
             }
-            if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) + (flags[pid] & IS_NESTED) + (flags[pid] & IS_TILE) > 0) {
+            if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) + (flags[pid] & IS_NESTED) + (flags[pid] & IS_TILE) + (flags[pid] & IS_CIRCLE) > 0) {
                 _renderOrder[cursor] = pid;
                 ++cursor;
             }
@@ -370,6 +400,14 @@ class Scene {
                     var bl = tileCBL[id] != null ? tileCBL[id] * pxPerUnit : tr;
                     _sdf.color = tileColor[id];
                     _sdf.sdfRect(0, 0, width[i] * pxPerUnit, height[i] * pxPerUnit, {tr:tr, br:br, tl:tl, bl:bl}, tileBorder[id] * pxPerUnit, tileBorderColor[id], 2.2);
+                    _sdf.color = prevColor;
+                }
+                else if (flags[i] & IS_CIRCLE > 0) {
+                    var id = circleId[i];
+                    var prevColor = _sdf.color;
+                    var radius = circleRadius[id] * pxPerUnit;
+                    _sdf.color = circleColor[id];
+                    _sdf.sdfCircle(0, 0, radius, circleBorder[id] * pxPerUnit, circleBorderColor[id], 4.2);  // Fix smooth param
                     _sdf.color = prevColor;
                 }
                 _sdf.popTransformation();
@@ -479,6 +517,9 @@ class Scene {
         }
         else if (flags[nodeId] & IS_TILE > 0) {
             _freeTile.push(tileId[nodeId]);
+        }
+        else if (flags[nodeId] & IS_CIRCLE > 0) {
+            _freeTile.push(circleId[nodeId]);
         }
         flags[nodeId] = FREE;
         _free.push(nodeId);
