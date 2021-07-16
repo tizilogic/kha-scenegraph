@@ -407,7 +407,7 @@ class Scene {
                     var prevColor = _sdf.color;
                     var radius = circleRadius[id] * pxPerUnit;
                     _sdf.color = circleColor[id];
-                    _sdf.sdfCircle(0, 0, radius, circleBorder[id] * pxPerUnit, circleBorderColor[id], 4.2);  // Fix smooth param
+                    _sdf.sdfCircle(0, 0, radius, circleBorder[id] * pxPerUnit, circleBorderColor[id], 2.2);  // Fix smooth param
                     _sdf.color = prevColor;
                 }
                 _sdf.popTransformation();
