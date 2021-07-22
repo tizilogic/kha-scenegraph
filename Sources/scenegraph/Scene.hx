@@ -519,7 +519,7 @@ class Scene {
             _freeTile.push(tileId[nodeId]);
         }
         else if (flags[nodeId] & IS_CIRCLE > 0) {
-            _freeTile.push(circleId[nodeId]);
+            _freeCircle.push(circleId[nodeId]);
         }
         flags[nodeId] = FREE;
         _free.push(nodeId);
@@ -537,7 +537,7 @@ class Scene {
     public function query(px:FastFloat, py:FastFloat, ?depthSorted:Bool = true):Array<Node> {
         var ids = new Array<Int>();
         for (i in 1...this.x.length) {
-            if (flags[i] & HIDDEN > 0) {
+            if (flags[i] & HIDDEN > 0 || flags[i] & FREE > 0) {
                 continue;
             }
             var p = parent[i];
