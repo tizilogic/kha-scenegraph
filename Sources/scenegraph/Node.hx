@@ -15,12 +15,17 @@ import scenegraph.Sprite;
 import scenegraph.Text;
 import scenegraph.Tile;
 import scenegraph.Circle;
+import scenegraph.Line;
 import scenegraph.Types;
 
 
 @:allow(scenegraph.Scene)
 class Node {
     private var _scene:Scene;
+    private var _xGetter:()->FastFloat;
+    private var _yGetter:()->FastFloat;
+    private var _xSetter:(FastFloat)->FastFloat;
+    private var _ySetter:(FastFloat)->FastFloat;
 
     public var id(get, null):Int;
     public var name(get, set):String;
@@ -116,6 +121,10 @@ class Node {
 
     public function attachCircle(?x:FastFloat = 0, ?y:FastFloat = 0, radius:FastFloat, color:Color, ?border:FastFloat = 0, ?borderColor:Color = null):Circle {
         return new Circle(x, y, radius, color, border, borderColor, this);
+    }
+
+    public function attachLine(x1:FastFloat, y1:FastFloat, x2:FastFloat, y2:FastFloat, color:Color, ?strength:FastFloat = 0):Line {
+        return new Line(x1, y1, x2, y2, color, strength, this);
     }
 
     public inline function inside(ox:FastFloat, oy:FastFloat):Bool {
@@ -248,20 +257,32 @@ class Node {
     }
 
     private inline function get_x():FastFloat {
+        if (_xGetter != null) {
+            return _xGetter();
+        }
         return _scene.x[id];
     }
 
     private inline function set_x(v:FastFloat):FastFloat {
+        if (_xSetter != null) {
+            return _xSetter(v);
+        }
         _scene.x[id] = v;
         _scene.propagateDirty(id);
         return _scene.x[id];
     }
 
     private inline function get_y():FastFloat {
+        if (_yGetter != null) {
+            return _yGetter();
+        }
         return _scene.y[id];
     }
 
     private inline function set_y(v:FastFloat):FastFloat {
+        if (_ySetter != null) {
+            return _ySetter(v);
+        }
         _scene.y[id] = v;
         _scene.propagateDirty(id);
         return _scene.y[id];

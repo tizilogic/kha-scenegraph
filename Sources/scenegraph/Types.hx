@@ -25,4 +25,5 @@ abstract NodeFlag (Int) to Int {
     var IS_NESTED = 128;
     var IS_TILE = 256;
     var IS_CIRCLE = 512;
+    var IS_LINE = 1024;
 }

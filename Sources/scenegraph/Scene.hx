@@ -61,6 +61,7 @@ class Scene {
     private var nestedId = new Array<Int>();
     private var tileId = new Array<Int>();
     private var circleId = new Array<Int>();
+    private var lineId = new Array<Int>();
 
     // Sprite
     private var image = new Array<Image>();
@@ -94,12 +95,21 @@ class Scene {
     private var circleBorder = new Array<FastFloat>();
     private var circleRadius = new Array<FastFloat>();
 
+    // Line
+    private var lineColor = new Array<Null<Color>>();
+    private var lineStrength = new Array<FastFloat>();
+    private var lineX1 = new Array<FastFloat>();
+    private var lineY1 = new Array<FastFloat>();
+    private var lineX2 = new Array<FastFloat>();
+    private var lineY2 = new Array<FastFloat>();
+
     private var _free = new Array<Int>();
     private var _freeImage = new Array<Int>();
     private var _freeText = new Array<Int>();
     private var _freeNested = new Array<Int>();
     private var _freeTile = new Array<Int>();
     private var _freeCircle = new Array<Int>();
+    private var _freeLine = new Array<Int>();
 
 
     public function new(?buffer:Image = null, ?reserve:Int = 0) {
@@ -123,6 +133,7 @@ class Scene {
         nestedId.resize(reserve + 1);
         tileId.resize(reserve + 1);
         circleId.resize(reserve + 1);
+        lineId.resize(reserve + 1);
 
         // Root
         x[0] = 0;
@@ -145,6 +156,7 @@ class Scene {
         nestedId[0] = -1;
         tileId[0] = -1;
         circleId[0] = -1;
+        lineId[0] = -1;
 
         if (reserve > 0) {
             _free.resize(reserve);
@@ -292,6 +304,30 @@ class Scene {
         _renderOrder.push(nodeId);
     }
 
+    private function insertLine(nodeId:Int, x1:FastFloat, y1:FastFloat, x2:FastFloat, y2:FastFloat, color:Color, ?strength:FastFloat = 0) {
+        var id:Int;
+        if (_freeLine.length > 0) {
+            id = _freeLine.pop();
+            lineColor[id] = color;
+            lineStrength[id] = strength > 0 ? strength : 1 / pxPerUnit;
+            lineX1[id] = x1;
+            lineY1[id] = y1;
+            lineX2[id] = x2;
+            lineY2[id] = y2;
+        }
+        else {
+            id = lineColor.length;
+            lineColor[id] = color;
+            lineStrength.push(strength > 0 ? strength : 1 / pxPerUnit);
+            lineX1.push(x1);
+            lineY1.push(y1);
+            lineX2.push(x2);
+            lineY2.push(y2);
+        }
+        lineId[nodeId] = id;
+        _renderOrder.push(nodeId);
+    }
+
     private function get_root():Node {
         return nodes[this][0];
     }
@@ -338,7 +374,7 @@ class Scene {
                 }
                 _toProcess.push(i);
             }
-            if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) + (flags[pid] & IS_NESTED) + (flags[pid] & IS_TILE) + (flags[pid] & IS_CIRCLE) > 0) {
+            if ((flags[pid] & IS_IMAGE) + (flags[pid] & IS_TEXT) + (flags[pid] & IS_NESTED) + (flags[pid] & IS_TILE) + (flags[pid] & IS_CIRCLE) + (flags[pid] & IS_LINE) > 0) {
                 _renderOrder[cursor] = pid;
                 ++cursor;
             }
@@ -410,6 +446,18 @@ class Scene {
                     _sdf.sdfCircle(0, 0, radius, circleBorder[id] * pxPerUnit, circleBorderColor[id], 2.2);  // Fix smooth param
                     _sdf.color = prevColor;
                 }
+                else if (flags[i] & IS_LINE > 0) {
+                    var id = lineId[i];
+                    var prevColor = _sdf.color;
+                    var x1 = lineX1[id] * pxPerUnit;
+                    var y1 = lineY1[id] * pxPerUnit;
+                    var x2 = lineX2[id] * pxPerUnit;
+                    var y2 = lineY2[id] * pxPerUnit;
+                    var strength = lineStrength[id] * pxPerUnit;
+                    _sdf.color = lineColor[id];
+                    _sdf.sdfLine(x1, y1, x2, y2, strength, 2.2);
+                    _sdf.color = prevColor;
+                }
                 _sdf.popTransformation();
                 _sdf.popOpacity();
             }
@@ -476,6 +524,8 @@ class Scene {
             textId[id] = -1;
             nestedId[id] = -1;
             tileId[id] = -1;
+            circleId[id] = -1;
+            lineId[id] = -1;
         }
         else {
             id = x.length;
@@ -499,6 +549,8 @@ class Scene {
             textId.push(-1);
             nestedId.push(-1);
             tileId.push(-1);
+            circleId.push(-1);
+            lineId.push(-1);
         }
         nodes[this][id] = node;
         return id;
@@ -521,6 +573,9 @@ class Scene {
         else if (flags[nodeId] & IS_CIRCLE > 0) {
             _freeCircle.push(circleId[nodeId]);
         }
+        else if (flags[nodeId] & IS_LINE > 0) {
+            _freeLine.push(lineId[nodeId]);
+        }
         flags[nodeId] = FREE;
         _free.push(nodeId);
         nodes[this].remove(nodeId);
@@ -537,7 +592,8 @@ class Scene {
     public function query(px:FastFloat, py:FastFloat, ?depthSorted:Bool = true):Array<Node> {
         var ids = new Array<Int>();
         for (i in 1...this.x.length) {
-            if (flags[i] & HIDDEN > 0 || flags[i] & FREE > 0) {
+            if ((flags[i] & HIDDEN + flags[i] & FREE + flags[i] & IS_LINE) > 0) {
+                // TODO: Include Line Nodes in results instead of skipping
                 continue;
             }
             var p = parent[i];
