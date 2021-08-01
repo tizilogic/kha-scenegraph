@@ -128,14 +128,15 @@ class Node {
     }
 
     public inline function inside(ox:FastFloat, oy:FastFloat):Bool {
-        if (_scene.flags[id] & IS_CIRCLE > 0) {
-            var center = new FastVector2(x, y);
-            var point = new FastVector2(ox, oy);
-            var delta = center.sub(point).length;
-            return delta <= _scene.circleRadius[_scene.circleId[id]];
-        }
         if (_scene.flags[id] & DIRTY > 0) {
             _scene.traverse();
+        }
+        if (_scene.flags[id] & IS_CIRCLE > 0) {
+            var center = _scene.transform[id].multvec(new FastVector2(x, y));
+            var point = new FastVector2(ox, oy);
+            var delta = center.sub(point).length;
+            var r = getRelativeScaleX(_scene.root) * _scene.circleRadius[_scene.circleId[id]];
+            return delta <= r;
         }
         var tl = new FastVector2(0, 0);
         var tr = new FastVector2(width * _scene.pxPerUnit, 0);
