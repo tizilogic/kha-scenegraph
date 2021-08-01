@@ -134,6 +134,9 @@ class Node {
             var delta = center.sub(point).length;
             return delta <= _scene.circleRadius[_scene.circleId[id]];
         }
+        if (_scene.flags[id] & DIRTY > 0) {
+            _scene.traverse();
+        }
         var tl = new FastVector2(0, 0);
         var tr = new FastVector2(width * _scene.pxPerUnit, 0);
         var bl = new FastVector2(0, height * _scene.pxPerUnit);
