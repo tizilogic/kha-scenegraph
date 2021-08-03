@@ -132,7 +132,7 @@ class Node {
             _scene.traverse();
         }
         if (_scene.flags[id] & IS_CIRCLE > 0) {
-            var center = _scene.transform[id].multvec(new FastVector2(x, y));
+            var center = _scene.transform[id].multvec(new FastVector2(0, 0)).div(_scene.pxPerUnit);
             var point = new FastVector2(ox, oy);
             var delta = center.sub(point).length;
             var r = getRelativeScaleX(_scene.root) * _scene.circleRadius[_scene.circleId[id]];
