@@ -2,7 +2,6 @@ package scenegraph;
 
 import kha.Color;
 import kha.FastFloat;
-import SDFPainter;
 
 import scenegraph.Node;
 import scenegraph.Types;
