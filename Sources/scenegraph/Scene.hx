@@ -580,6 +580,7 @@ class Scene {
         _free.push(nodeId);
         nodes[this].remove(nodeId);
         while (_renderOrder.remove(nodeId)) {}
+        propagateDirty(parent[nodeId]);
     }
 
     /**
