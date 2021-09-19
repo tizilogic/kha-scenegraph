@@ -37,6 +37,28 @@ class Scene {
     public var unitHeight(get, null):FastFloat;
     private var _buffer:Image;
     private var _sdf:SDFPainter;
+    public var imageScaleQuality(get, set):kha.graphics2.ImageScaleQuality;
+    public var mipmapScaleQuality(get, set):kha.graphics2.ImageScaleQuality;
+    private var _imageScaleQuality:kha.graphics2.ImageScaleQuality = High;
+    private var _mipmapScaleQuality:kha.graphics2.ImageScaleQuality = null;
+
+    function get_imageScaleQuality():kha.graphics2.ImageScaleQuality {
+        return _imageScaleQuality;
+    }
+
+    function set_imageScaleQuality(v:kha.graphics2.ImageScaleQuality):kha.graphics2.ImageScaleQuality {
+        _sdf.imageScaleQuality = v;
+        return _imageScaleQuality = v;
+    }
+
+    function get_mipmapScaleQuality():kha.graphics2.ImageScaleQuality {
+        return _mipmapScaleQuality;
+    }
+
+    function set_mipmapScaleQuality(v:kha.graphics2.ImageScaleQuality):kha.graphics2.ImageScaleQuality {
+        _sdf.mipmapScaleQuality = v;
+        return _mipmapScaleQuality = v;
+    }
 
     // Node
     private static var nodes = new Map<Scene, Map<Int, Node>>();
