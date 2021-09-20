@@ -42,13 +42,17 @@ class FmtText extends Node {
         parseXml(xmlText, align);
     }
 
-    public inline function parseXml(xmlText:String, ?align:HAlign = LEFT) {
+    public inline function clearAll() {
         for (i in _nodes.keys()) {
             while (_nodes[i].length > 0) {
                 _nodes[i].pop().destroy();
             }
         }
         _nodes.clear();
+    }
+
+    public inline function parseXml(xmlText:String, ?align:HAlign = LEFT) {
+        clearAll();
         var row = 0;
         var px:FastFloat = 0.0;
         var py:FastFloat = 0.0;
@@ -111,5 +115,10 @@ class FmtText extends Node {
                 nd.y -= top;
             }
         }
+    }
+
+    public override function destroy() {
+        clearAll();
+        super.destroy();
     }
 }
