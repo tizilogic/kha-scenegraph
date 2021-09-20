@@ -40,7 +40,7 @@ class Scene {
     public var imageScaleQuality(get, set):kha.graphics2.ImageScaleQuality;
     public var mipmapScaleQuality(get, set):kha.graphics2.ImageScaleQuality;
     private var _imageScaleQuality:kha.graphics2.ImageScaleQuality = High;
-    private var _mipmapScaleQuality:kha.graphics2.ImageScaleQuality = null;
+    private var _mipmapScaleQuality:kha.graphics2.ImageScaleQuality = Low;
 
     function get_imageScaleQuality():kha.graphics2.ImageScaleQuality {
         return _imageScaleQuality;
